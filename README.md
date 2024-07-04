@@ -12,22 +12,25 @@ Place Down The Vampire Monkey And Choose Beetween A Variety Of Characters.
 You Will Gain XP When You Pop Bloons(No Regrow).                                                                       
 When You Fill The Xp Bar, A Panel Will Open With 3 Random Choice Beetween Thse Actions : Select A Weapon - Upgrade A Weapon - Select An Item - Upgrade An Item - Evolve A Weapon                                       
                                                                        
-Character(7):                                                                       
--Dart Monkey -> Focus On Pierce And Damage                                                                       
--Ninja Monkey -> Focus On Attack Speed And Projectile Size                                                                       
+Character(10):                                                                       
+-Dart Monkey - Focus On Pierce And Damage                                                                       
+-Ninja Monkey - Focus On Attack Speed And Projectile Size                                                                       
 -Engineer Monkey - Focus On Bonus Projectiles                                                                       
 -Tack Shooter - Focus On Range                                                                       
 -Bomb Shooter - Focus On Xp And Projectile Size                                                                       
 -Wizard Monkey - Focus On Damage And Pierce                                                                       
--Druid - Focus On Xp And Every Other Stats                                                                       
+-Druid - Focus On Xp And Every Other Stats
+-Banana Farm - Focus On Monkey                                                                             
+-Spike factory - Focus On Pierce And Danage                                                                                                                      
+-Quncy - Focux On Attack Speed, Range And Pierce
                                                                        
-Weapons(7):                                                                       
--Dart - Shuriken - Nail - Tack - Bomb - Magic - Thorn                                                                       
+Weapons(10):                                                                       
+-Dart - Shuriken - Nail - Tack - Bomb - Magic - Thorn - Banana - Spike - Arrow                                                                  
                                                                        
-Items(7):                                                                       
--Goggles(Range) - Jungle Drums(Attack Speed) - Darts Stock(Projectiles) - MonkeyIndustry(Xp) - Black Smith(Pierce) - Size Potion(Projectile Size) - Lightning Bolt(Damage)                                             
+Items(8):                                                                       
+-Goggles(Range) - Jungle Drums(Attack Speed) - Darts Stock(Projectiles) - MonkeyIndustry(Xp) - Black Smith(Pierce) - Size Potion(Projectile Size) - Lightning Bolt(Damage) -Fertilizer(Money)                                             
                                                                        
-Evolutions(7):                                                                       
+Evolutions(10):                                                                       
 -Plasma : Dart + Lightning Bolt                                                                       
 -Dark Doom : Shuriken + Black Smith                                                                       
 -Rocket : Nail + Size Potion                                                                       
@@ -35,6 +38,9 @@ Evolutions(7):
 -Seeking Explosion : Bomb + Goggles                                                                       
 -Fire Ball : Magic + Monkey Industry                                                                       
 -Jungle Swarm : Thorn + Jungle Drums                                                                       
+-Factory : Banana + Fertilizer                                                                       
+-Mines : Spike + Lightning Bolt                                                                       
+-Flame Arrow : Arrow + BlackSmith                                                                       
                                                                        
 Inventory:                                                                       
 -6 Weapons Limit                                                                       
