@@ -66,4 +66,12 @@ namespace VampireMonkey.Items
         public override VampireMonkey.UpgradeType UpgradeType => VampireMonkey.UpgradeType.Damage;
         public override int MaxLevel => 5;
     }
+    public class Fertilizer : ItemTemplate
+    {
+        public override string ItemName => "Fertilizer";
+        public override string ItemIcon => VanillaSprites.Fertilizer;
+        public override float Increase => 1.1f;
+        public override VampireMonkey.UpgradeType UpgradeType => VampireMonkey.UpgradeType.Money;
+        public override int MaxLevel => 5;
+    }
 }

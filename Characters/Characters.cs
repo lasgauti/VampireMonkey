@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 using BTD_Mod_Helper.Api.Enums;
 using BTD_Mod_Helper.Extensions;
 using Il2CppAssets.Scripts.Models.Towers;
+using Il2CppAssets.Scripts.Models.Towers.Behaviors.Attack.Behaviors;
 using Il2CppAssets.Scripts.Simulation.Towers;
+using Il2CppAssets.Scripts.Simulation.Towers.Behaviors.Attack.Behaviors;
 using Il2CppAssets.Scripts.Unity;
 using VampireMonkey.Weapons;
 
@@ -168,5 +170,74 @@ namespace VampireMonkey.Characters
             
         }
     }
+    public class BananaFarm : CharacterTemplate
+    {
+        public override string CharacterName => "Banana Farm";
+        public override string CharacterImage => VanillaSprites.BananaFarm000;
+        public override string CharacterDescription => "Gain 1% Monkey Bonus Every Level";
+        public override float MoneyBonus => 1.15f;
+        public override WeaponTemplate StarterWeapon => new Banana();
+        public override void EditTower(Tower tower)
+        {
+
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            towerModel.display = Game.instance.model.GetTower(TowerType.BananaFarm).display;
+            tower.UpdateRootModel(towerModel);
+        }
+        public override void LevelUP(int level)
+        {
+            VampireMonkey.instance.moneyBonus += 0.01f;
+
+        }
+    }
+  
+    public class SpikeFactory : CharacterTemplate
+    {
+        public override string CharacterName => "Spike Factory";
+        public override string CharacterImage => VanillaSprites.SpikeFactory000;
+        public override string CharacterDescription => "Gain 5% Pierce and 5% Damage Every 9 Levels";
+        public override float DamageBonus => 1.1f;
+        public override float PierceBonus => 1.1f;
+        public override WeaponTemplate StarterWeapon => new Spike();
+        public override void EditTower(Tower tower)
+        {
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            towerModel.display = Game.instance.model.GetTower(TowerType.SpikeFactory).display;
+            tower.UpdateRootModel(towerModel);
+        }
+        public override void LevelUP(int level)
+        {
+            if (level % 9 == 0)
+            {
+                VampireMonkey.instance.pierceBonus += 0.05f;
+                VampireMonkey.instance.damageBonus += 0.05f;
+            }
+
+        }
+    }
+    public class Quincy : CharacterTemplate
+    {
+        public override string CharacterName => "Quincy";
+        public override string CharacterImage => VanillaSprites.QuincyIcon;
+        public override string CharacterDescription => "Gain 1.5% Attack Speed, Range And Pierce Every 2 Levels. He Aso Never Miss!";
+        public override WeaponTemplate StarterWeapon => new Arrow();
+        public override void EditTower(Tower tower)
+        {
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            towerModel.display = Game.instance.model.GetTower(TowerType.Quincy).display;
+            tower.UpdateRootModel(towerModel);
+        }
+        public override void LevelUP(int level)
+        {
+            if (level % 3 == 0)
+            {
+                VampireMonkey.instance.attackSpeedBonus += 0.015f;
+                VampireMonkey.instance.rangeBonus += 0.015f;
+                VampireMonkey.instance.pierceBonus += 0.015f;
+            }
+
+        }
+    }
+
 }
 

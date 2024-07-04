@@ -46,6 +46,8 @@ using Il2CppSystem.Numerics;
 using Il2CppAssets.Scripts.Models.Towers.Behaviors.Attack;
 using VampireMonkey.Evolutions;
 using FuzzySharp.Utils;
+using Il2CppAssets.Scripts.Models.Towers.Weapons.Behaviors;
+using static MelonLoader.MelonLogger;
 
 [assembly: MelonInfo(typeof(VampireMonkey.VampireMonkey), ModHelperData.Name, ModHelperData.Version, ModHelperData.RepoOwner)]
 [assembly: MelonGame("Ninja Kiwi", "BloonsTD6")]
@@ -66,11 +68,13 @@ public class VampireMonkey : BloonsTD6Mod
     public float damageBonus;
     public float attackSpeedBonus;
     public float XPBonus;
+    public float moneyBonus;
     public int projectileBonus;
     public float projectileSizeBonus;
     public bool selectingCharacter;
     public int itemLimit = 6;
     public int weaponLimit = 6;
+    public int rerollCount = 5;
     public List<WeaponTemplate> weapons = new List<WeaponTemplate>();
     public List<ItemTemplate> items = new List<ItemTemplate>();
     public int level = 0;
@@ -85,6 +89,7 @@ public class VampireMonkey : BloonsTD6Mod
         Projectiles,
         Xp,
         MIB,
+        Money,
     }
 
     public CharacterTemplate selectedCharacter
@@ -109,9 +114,7 @@ public class VampireMonkey : BloonsTD6Mod
         public override void ModifyBaseTowerModel(TowerModel towerModel)
         {
             var attackModel = towerModel.GetAttackModel();
-            attackModel.range = 0;
-            attackModel.weapons[0].rate = 99999;
-            attackModel.weapons[0].projectile.GetBehavior<TravelStraitModel>().lifespan = 0.01f;
+            towerModel.RemoveBehavior(attackModel);
         }
     }
     public override void OnApplicationStart()
@@ -137,6 +140,7 @@ public class VampireMonkey : BloonsTD6Mod
         items.Clear();
         selectingCharacter = false;
         level = 0;
+        rerollCount = 5;
 
         foreach (var weapon in ModContent.GetContent<WeaponTemplate>())
         {
@@ -198,6 +202,7 @@ public class VampireMonkey : BloonsTD6Mod
                     var projectileSize = 1f;
                     var projectiles = 0;
                     var attackSpeed = 1f;
+                    var money = 1f;
                     var mib = false;
                     for (var i = 0; i < weapon.level; i++)
                     {
@@ -234,14 +239,14 @@ public class VampireMonkey : BloonsTD6Mod
                             {
                                 mib = true;
                             }
+                            if (stat == UpgradeType.Money)
+                            {
+                                money += (weapon.Increase[i][y] - 1);
+                            }
                         }
                     }
 
-                    foreach (var weapons in ModContent.GetContent<WeaponTemplate>()) 
-                    {
-                        ModHelper.Log<VampireMonkey>(weapons.Name + " " + weapons.canBeSelected);
-                    }
-                    var attackModel = towerModel.GetAttackModel(weapon.WeaponName);
+                    var attackModel = towerModel.GetAttackModel("AttackModel_" + weapon.WeaponName);
                     if (attackModel != null)
                     {
                         attackModel.range = weapon.BaseAttackModel.range * rangeBonus * range;
@@ -257,10 +262,22 @@ public class VampireMonkey : BloonsTD6Mod
                                 attackModel.weapons[0].projectile.GetDamageModel().immuneBloonProperties = BloonProperties.None;
                             }
                         }
-                        attackModel.weapons[0].emission = new ArcEmissionModel("Emission", weapon.BaseProjectileCount + projectileBonus + projectiles, 0, weapon.BaseProjectileDegree, null, false, false);
+                        if (attackModel.weapons[0].HasBehavior<EmissionsPerRoundFilterModel>())
+                        {
+                            attackModel.weapons[0].GetBehavior<EmissionsPerRoundFilterModel>().count = weapon.BaseAttackModel.weapons[0].GetBehavior<EmissionsPerRoundFilterModel>().count + projectiles + projectileBonus;
+                        }
+                        else
+                        {
+                            attackModel.weapons[0].emission = new ArcEmissionModel("Emission", weapon.BaseProjectileCount + projectileBonus + projectiles, 0, weapon.BaseProjectileDegree, null, false, false);
+                        }
                         if (mib)
                         {
                             attackModel.GetDescendants<FilterInvisibleModel>().ForEach(model => model.isActive = false);
+                        }
+                        if (attackModel.weapons[0].projectile.HasBehavior<CashModel>())
+                        {
+                            attackModel.weapons[0].projectile.GetBehavior<CashModel>().minimum = weapon.BaseAttackModel.weapons[0].projectile.GetBehavior<CashModel>().minimum * moneyBonus * money;
+                            attackModel.weapons[0].projectile.GetBehavior<CashModel>().maximum = weapon.BaseAttackModel.weapons[0].projectile.GetBehavior<CashModel>().maximum * moneyBonus * money;
                         }
                         if (attackModel.weapons[0].projectile.HasBehavior<CreateProjectileOnContactModel>())
                         {
@@ -301,6 +318,7 @@ public class VampireMonkey : BloonsTD6Mod
         pierceBonus = character.PierceBonus;
         attackSpeedBonus = character.AttackSpeedBonus;
         rangeBonus = character.RangeBonus;
+        moneyBonus = character.MoneyBonus;
     }
     public void WeaponSelected(WeaponTemplate weapon, Tower tower)
     {
@@ -360,7 +378,7 @@ public class VampireMonkey : BloonsTD6Mod
         }
         if (stat == UpgradeType.Projectiles)
         {
-            projectileBonus += (int)item.Increase ;
+            projectileBonus += (int)item.Increase;
         }
         if (stat == UpgradeType.AttackSpeed)
         {
@@ -369,6 +387,10 @@ public class VampireMonkey : BloonsTD6Mod
         if (stat == UpgradeType.Xp)
         {
             XPBonus += (item.Increase - 1);
+        }
+        if (stat == UpgradeType.Money)
+        {
+            moneyBonus += (item.Increase - 1);
         }
         selectingCharacter = false;
     }
@@ -404,6 +426,10 @@ public class VampireMonkey : BloonsTD6Mod
         {
             XPBonus += (item.Increase - 1);
         }
+        if (stat == UpgradeType.Money)
+        {
+            moneyBonus += (item.Increase - 1);
+        }
         selectingCharacter = false;
     }
     [RegisterTypeInIl2Cpp(false)]
@@ -411,6 +437,7 @@ public class VampireMonkey : BloonsTD6Mod
     {
         public static MenuUi ui;
         public static ModHelperPanel XpBar;
+        public static ModHelperText Level;
 
         public ModHelperInputField input;
         public static ModHelperPanel CreateCharacter(CharacterTemplate character, Tower tower)
@@ -488,7 +515,10 @@ public class VampireMonkey : BloonsTD6Mod
             var size = 2370 * percent / 100;
             ModHelperPanel xpbar = panel.AddPanel(new Info("Panel",0, ( size - size / 2) - 1185, 160, size), VanillaSprites.MainBGPanelBlue);
             XpBar = xpbar;
-
+            ModHelperText level = panel.AddText(new Info("Panel", 0, 0, 160, 160), "0", 80 );
+            level.Text.color = new UnityEngine.Color(0, 1, 0);
+            level.Text.outlineColor = new UnityEngine.Color(0, 0.7f, 0);
+            Level = level;
         }
         public static void CreateLevelUpMenu(RectTransform rect, Tower tower)
         {
@@ -498,7 +528,27 @@ public class VampireMonkey : BloonsTD6Mod
             ModHelperText levelUpReward = panel.AddText(new Info("levelUpReward", 0, 800, 2500, 180), "Level Up Reward", 100);
             Il2CppSystem.Random rnd = new Il2CppSystem.Random();
             float x = 412.5f;
-
+          
+            if (instance.rerollCount > 0)
+            {
+                ModHelperButton rerollButton = panel.AddButton(new Info("rerollButton", 0, 675, 500, 140), VanillaSprites.GreenBtnLong, new System.Action(() =>
+                {
+                    if (instance.rerollCount > 0)
+                    {
+                        instance.rerollCount--;
+                        MenuUi.ui.CloseMenu();
+                        CreateLevelUpMenu(rect, tower);
+                    }
+                }));
+                ModHelperText rerollButtonText = rerollButton.AddText(new Info("rerollButtonText", 0, 0, 700, 160), "Reroll -> " + instance.rerollCount, 70);
+            }
+            else
+            {
+                ModHelperButton rerollButton = panel.AddButton(new Info("rerollButton", 0, 675, 500, 140), VanillaSprites.RedBtnLong, null);
+                ModHelperText rerollButtonText = rerollButton.AddText(new Info("rerollButtonText", 0, 0, 700, 160), "Reroll -> 0", 70);
+            }
+                
+          
             List<WeaponTemplate> choosableWeapon = new List<WeaponTemplate>();
 
             foreach (var weapon in ModContent.GetContent<WeaponTemplate>())
@@ -874,6 +924,7 @@ public class VampireMonkey : BloonsTD6Mod
                 WeaponTemplate weapon = instance.weapons[i];
                 ModHelperPanel ownedWeaponEmpty = panel.AddPanel(new Info("ownedWeaponEmpty", x, -150, 170, 170, new UnityEngine.Vector2()), VanillaSprites.GreyInsertPanel);
                 ModHelperImage image = ownedWeaponEmpty.AddImage(new Info("image", 0, 0, 170, 170), weapon.WeaponIcon);
+                ModHelperText level = ownedWeaponEmpty.AddText(new Info("Panel", 0, 0, 160, 160), weapon.level.ToString(), 60);
                 x += 435f;
             }
             for (int i = 0; i < instance.weaponLimit - instance.weapons.Count; i++)
@@ -888,6 +939,7 @@ public class VampireMonkey : BloonsTD6Mod
                 ItemTemplate item = instance.items[i];
                 ModHelperPanel ownedItemEmpty = panel.AddPanel(new Info("ownedItemEmpty", x, -425, 170, 170, new UnityEngine.Vector2()), VanillaSprites.GreyInsertPanel);
                 ModHelperImage image = ownedItemEmpty.AddImage(new Info("image", 0, 0, 170, 170), item.ItemIcon);
+                ModHelperText level = ownedItemEmpty.AddText(new Info("Panel", 0, 0, 160, 160), item.level.ToString(), 60);
                 x += 435f;
             }
             for (int i = 0; i < instance.itemLimit - instance.items.Count; i++)
@@ -895,8 +947,7 @@ public class VampireMonkey : BloonsTD6Mod
                 ModHelperPanel ownedItemEmpty = panel.AddPanel(new Info("ownedItemEmpty", x, -425, 170, 170, new UnityEngine.Vector2()), VanillaSprites.GreyInsertPanel);
                 x += 435f;
             }
-            instance.level += 1;
-            instance.selectedCharacter.LevelUP(instance.level);
+            
         }
         public static void UpdateXp(RectTransform rect, Tower tower)
         {
@@ -907,7 +958,7 @@ public class VampireMonkey : BloonsTD6Mod
                 size = 2370;
             }
             XpBar.SetInfo(new Info("Panel", 0, (size - size / 2) - 1185, 160, size));
-         
+            Level.Text.text = instance.level.ToString();
             if (instance.Xp >= instance.XpMax && !instance.selectingCharacter)
             {
                 Thread.Sleep(50);
@@ -915,6 +966,8 @@ public class VampireMonkey : BloonsTD6Mod
                 CreateLevelUpMenu(rect, tower);
                 instance.Xp -= instance.XpMax;
                 instance.XpMax += (5 + instance.XpMax / 10f);
+                instance.level += 1;
+                instance.selectedCharacter.LevelUP(instance.level);
             }
            
         }
@@ -935,5 +988,19 @@ public class VampireMonkey : BloonsTD6Mod
             }
         }
     }
-
+    [HarmonyPatch(typeof(Il2CppAssets.Scripts.Simulation.Tracking.AnalyticsTrackerSimManager), nameof(Il2CppAssets.Scripts.Simulation.Tracking.AnalyticsTrackerSimManager.OnCashEarned))]
+    internal static class CashEarned
+    {
+        [HarmonyPrefix]
+        private static void Prefix(double cash, Tower tower)
+        {
+            if (tower != null && tower.towerModel.name.Contains("VampireMonkey"))
+            {
+                instance.Xp += 0.06f * (float)cash * instance.XPBonus;
+                InGame game = InGame.instance;
+                RectTransform rect = game.uiRect;
+                MenuUi.UpdateXp(rect, tower);
+            }
+        }
+    }
 }

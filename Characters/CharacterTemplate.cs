@@ -25,6 +25,7 @@ namespace VampireMonkey.Characters
         public virtual float XPBonus { get; } = 1.00f;
         public virtual int ProjectileBonus { get; } = 0;
         public virtual float ProjectileSizeBonus { get; } = 1.00f;
+        public virtual float MoneyBonus { get; } = 1.00f;
         public abstract void EditTower(Tower tower);
         public abstract void LevelUP(int level);
     }

@@ -6,14 +6,18 @@ using System.Threading.Tasks;
 using BTD_Mod_Helper;
 using BTD_Mod_Helper.Api.Enums;
 using BTD_Mod_Helper.Extensions;
+using Harmony;
+using HarmonyLib;
 using Il2Cpp;
 using Il2CppAssets.Scripts.Models.Bloons.Behaviors;
 using Il2CppAssets.Scripts.Models.Towers;
 using Il2CppAssets.Scripts.Models.Towers.Behaviors.Attack;
+using Il2CppAssets.Scripts.Models.Towers.Behaviors.Attack.Behaviors;
 using Il2CppAssets.Scripts.Models.Towers.Behaviors.Emissions;
 using Il2CppAssets.Scripts.Models.Towers.Filters;
 using Il2CppAssets.Scripts.Models.Towers.Projectiles;
 using Il2CppAssets.Scripts.Models.Towers.Projectiles.Behaviors;
+using Il2CppAssets.Scripts.Models.Towers.Weapons.Behaviors;
 using Il2CppAssets.Scripts.Simulation.Towers;
 using Il2CppAssets.Scripts.Unity;
 using Unity.Jobs;
@@ -138,6 +142,42 @@ namespace VampireMonkey.Weapons
             attack.weapons[0].projectile.scale *= 2;
             attack.weapons[0].projectile.radius *= 2;
             attack.range *= 2;
+            return attack.Duplicate();
+        }
+        public static AttackModel GetFactoryAttack()
+        {
+            var attack = Game.instance.model.GetTowerFromId("BananaFarm-400").GetAttackModel().Duplicate();
+            attack.weapons[0].projectile.GetBehavior<CashModel>().minimum = 450;
+            attack.weapons[0].projectile.GetBehavior<CashModel>().maximum = 450;
+            attack.weapons[0].GetBehavior<EmissionsPerRoundFilterModel>().count = 7;
+            return attack.Duplicate();
+        }
+        public static AttackModel GetMinesAttack()
+        {
+            var attack = Game.instance.model.GetTowerFromId("SpikeFactory-400").GetAttackModel().Duplicate();
+            attack.weapons[0].projectile.GetDamageModel().damage = 11;
+            attack.weapons[0].projectile.pierce = 50;
+            attack.weapons[0].rate = 3.5f;
+            attack.weapons[0].projectile.GetBehavior<CreateProjectileOnExhaustFractionModel>().projectile.GetDamageModel().damage = 220;
+            attack.weapons[0].projectile.GetBehavior<CreateProjectileOnExhaustFractionModel>().projectile.pierce = 100;
+            attack.weapons[0].projectile.GetBehavior<CreateProjectileOnExpireModel>().projectile.GetDamageModel().damage = 275;
+            attack.weapons[0].projectile.GetBehavior<CreateProjectileOnExpireModel>().projectile.pierce = 150;
+            return attack.Duplicate();
+        }
+        public static AttackModel GetFlameArrowAttack()
+        {
+            var attack = Game.instance.model.GetTowerFromId("Quincy").GetAttackModel().Duplicate();
+            var fire = Game.instance.model.GetTowerFromId("Alchemist").GetDescendant<AddBehaviorToBloonModel>().Duplicate();
+            fire.GetBehavior<DamageOverTimeModel>().interval = 0.5f;
+            fire.lifespan = 15;
+            fire.lifespanFrames = 900;
+            fire.GetBehavior<DamageOverTimeModel>().damage = 15;
+            fire.overlayType = "Fire";
+            attack.weapons[0].projectile.AddBehavior(fire);
+            attack.weapons[0].projectile.pierce = 35;
+            attack.weapons[0].projectile.GetDamageModel().immuneBloonProperties = BloonProperties.None;
+            attack.weapons[0].projectile.GetDamageModel().damage = 2;
+            attack.weapons[0].rate = 0.35f;
             return attack.Duplicate();
         }
     }
@@ -374,6 +414,90 @@ namespace VampireMonkey.Weapons
 
         }
     }
+    public class Factory : WeaponTemplate
+    {
+        public override int MaxLevel => 0;
+        public override string WeaponIcon => VanillaSprites.BananaResearchFacilityUpgradeIcon;
+        public override string WeaponName => "Factory";
+        public override int BaseProjectileCount => 1;
+        public override float BaseProjectileDegree => 0;
+        public override AttackModel BaseAttackModel => Projectiles.GetFactoryAttack();
+        public override VampireMonkey.UpgradeType[][] Upgrades => new VampireMonkey.UpgradeType[][] { };
+        public override bool Evolution => true;
+        public override float[][] Increase => new float[][] { };
+        public override void EditTower(Tower tower)
+        {
+            var wpn = Game.instance.model.GetTowerFromId("BananaFarm-400").GetAttackModel().Duplicate();
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            wpn.name = WeaponName;
+            wpn.weapons[0].projectile.GetBehavior<CashModel>().minimum = 450;
+            wpn.weapons[0].projectile.GetBehavior<CashModel>().maximum = 450;
+            wpn.weapons[0].GetBehavior<EmissionsPerRoundFilterModel>().count = 7;
+            towerModel.AddBehavior(wpn);
+            tower.UpdateRootModel(towerModel);
+
+        }
+    }
+    public class Mines : WeaponTemplate
+    {
+        public override int MaxLevel => 0;
+        public override string WeaponIcon => VanillaSprites.SuperMinesUpgradeIcon;
+        public override string WeaponName => "Mines";
+        public override int BaseProjectileCount => 2;
+        public override float BaseProjectileDegree => 360;
+        public override AttackModel BaseAttackModel => Projectiles.GetMinesAttack();
+        public override VampireMonkey.UpgradeType[][] Upgrades => new VampireMonkey.UpgradeType[][] { };
+        public override bool Evolution => true;
+        public override float[][] Increase => new float[][] { };
+        public override void EditTower(Tower tower)
+        {
+            var wpn = Game.instance.model.GetTowerFromId("SpikeFactory-400").GetAttackModel().Duplicate();
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            wpn.name = WeaponName;
+            wpn.weapons[0].projectile.GetDamageModel().damage = 11;
+            wpn.weapons[0].projectile.pierce = 50;
+            wpn.weapons[0].rate = 3.5f;
+            wpn.weapons[0].projectile.GetBehavior<CreateProjectileOnExhaustFractionModel>().projectile.GetDamageModel().damage = 220;
+            wpn.weapons[0].projectile.GetBehavior<CreateProjectileOnExhaustFractionModel>().projectile.pierce = 100;
+            wpn.weapons[0].projectile.GetBehavior<CreateProjectileOnExpireModel>().projectile.GetDamageModel().damage = 275;
+            wpn.weapons[0].projectile.GetBehavior<CreateProjectileOnExpireModel>().projectile.pierce = 150;
+            towerModel.AddBehavior(wpn);
+            tower.UpdateRootModel(towerModel);
+
+        }
+    }
+    public class FlameArrow : WeaponTemplate
+    {
+        public override int MaxLevel => 0;
+        public override string WeaponIcon => VanillaSprites.StormOfArrowsAA;
+        public override string WeaponName => "Flame Arrow";
+        public override int BaseProjectileCount => 10;
+        public override float BaseProjectileDegree => 45;
+        public override AttackModel BaseAttackModel => Projectiles.GetFlameArrowAttack();
+        public override VampireMonkey.UpgradeType[][] Upgrades => new VampireMonkey.UpgradeType[][] { };
+        public override bool Evolution => true;
+        public override float[][] Increase => new float[][] { };
+        public override void EditTower(Tower tower)
+        {
+            var wpn = Game.instance.model.GetTower(TowerType.Quincy).GetAttackModel().Duplicate();
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            wpn.name = WeaponName;
+            var fire = Game.instance.model.GetTowerFromId("Alchemist").GetDescendant<AddBehaviorToBloonModel>().Duplicate();
+            fire.GetBehavior<DamageOverTimeModel>().interval = 0.5f;
+            fire.lifespan = 15;
+            fire.lifespanFrames = 900;
+            fire.GetBehavior<DamageOverTimeModel>().damage = 15;
+            fire.overlayType = "Fire";
+            wpn.weapons[0].projectile.collisionPasses = new int[] { -1, 0 };
+            wpn.weapons[0].projectile.AddBehavior(fire);
+            wpn.weapons[0].projectile.pierce = 35;
+            wpn.weapons[0].projectile.GetDamageModel().immuneBloonProperties = BloonProperties.None;
+            wpn.weapons[0].projectile.GetDamageModel().damage = 2;
+            wpn.weapons[0].rate = 0.35f;
+            towerModel.AddBehavior(wpn);
+            tower.UpdateRootModel(towerModel);
+        }
+    }
     public class Dart : WeaponTemplate
     {
         public override int MaxLevel => 10;
@@ -391,7 +515,6 @@ namespace VampireMonkey.Weapons
             wpn.name = WeaponName;
             towerModel.AddBehavior(wpn);
             tower.UpdateRootModel(towerModel);
-
         }
     }
     public class Shuriken : WeaponTemplate
@@ -512,6 +635,65 @@ namespace VampireMonkey.Weapons
             towerModel.AddBehavior(wpn);
             tower.UpdateRootModel(towerModel);
 
+        }
+    }
+    public class Banana : WeaponTemplate
+    {
+        public override int MaxLevel => 10;
+        public override string WeaponIcon => VanillaSprites.IncreasedProductionUpgradeIcon;
+        public override string WeaponName => "Banana";
+        public override int BaseProjectileCount => 1;
+        public override float BaseProjectileDegree => 0;
+        public override AttackModel BaseAttackModel => Game.instance.model.GetTowerFromId("BananaFarm").GetAttackModel().Duplicate();
+        public override VampireMonkey.UpgradeType[][] Upgrades => new VampireMonkey.UpgradeType[][] { new[] { VampireMonkey.UpgradeType.Projectiles }/*1*/, new[] { VampireMonkey.UpgradeType.Projectiles, VampireMonkey.UpgradeType.Money }/*2*/, new[] { VampireMonkey.UpgradeType.Money }/*3*/, new[] { VampireMonkey.UpgradeType.Projectiles }/*4*/, new[] { VampireMonkey.UpgradeType.Money}/*5*/, new[] { VampireMonkey.UpgradeType.Projectiles, VampireMonkey.UpgradeType.Money }/*6*/, new[] { VampireMonkey.UpgradeType.Money }/*7*/, new[] {VampireMonkey.UpgradeType.Money, VampireMonkey.UpgradeType.Projectiles }/*8*/, new[] { VampireMonkey.UpgradeType.Projectiles }/*9*/, new[] { VampireMonkey.UpgradeType.Money }/*10*/};
+        public override float[][] Increase => new float[][] { new[] { 2f }/*1*/, new[] { 2f, 1.5f }/*2*/, new[] {1.5f }/*3*/, new[] { 2f }/*4*/, new[] { 1.5f }/*5*/, new[] { 2f, 1.5f }/*6*/, new[] { 1.5f }/*7*/, new[] { 1.5f, 2f }/*8*/, new[] { 2f }/*9*/, new[] { 1.75f }/*10*/};
+        public override void EditTower(Tower tower)
+        {
+            var wpn = Game.instance.model.GetTowerFromId("BananaFarm").GetAttackModel().Duplicate();
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            wpn.name = WeaponName;
+            towerModel.AddBehavior(wpn);
+            tower.UpdateRootModel(towerModel);
+
+        }
+    }
+ 
+    public class Spike : WeaponTemplate
+    {
+        public override int MaxLevel => 10;
+        public override string WeaponIcon => VanillaSprites.BiggerStacksUpgradeIcon;
+        public override string WeaponName => "Spike";
+        public override int BaseProjectileCount => 1;
+        public override float BaseProjectileDegree => 0;
+        public override AttackModel BaseAttackModel => Game.instance.model.GetTowerFromId("SpikeFactory").GetAttackModel().Duplicate();
+        public override VampireMonkey.UpgradeType[][] Upgrades => new VampireMonkey.UpgradeType[][] { new[] { VampireMonkey.UpgradeType.Projectiles }/*1*/, new[] { VampireMonkey.UpgradeType.Projectiles, VampireMonkey.UpgradeType.Damage }/*2*/, new[] { VampireMonkey.UpgradeType.AttackSpeed, VampireMonkey.UpgradeType.Range }/*3*/, new[] { VampireMonkey.UpgradeType.Projectiles, VampireMonkey.UpgradeType.MIB }/*4*/, new[] { VampireMonkey.UpgradeType.ProjectileSize, VampireMonkey.UpgradeType.Pierce }/*5*/, new[] { VampireMonkey.UpgradeType.Projectiles, VampireMonkey.UpgradeType.Damage }/*6*/, new[] { VampireMonkey.UpgradeType.Range }/*7*/, new[] { VampireMonkey.UpgradeType.ProjectileSize, VampireMonkey.UpgradeType.Pierce, VampireMonkey.UpgradeType.Projectiles }/*8*/, new[] { VampireMonkey.UpgradeType.Projectiles }/*9*/, new[] { VampireMonkey.UpgradeType.Damage, VampireMonkey.UpgradeType.AttackSpeed, VampireMonkey.UpgradeType.Pierce }/*10*/};
+        public override float[][] Increase => new float[][] { new[] { 1f }/*1*/, new[] { 1f, 1.5f }/*2*/, new[] { 1.25f, 1.5f }/*3*/, new[] { 1f, 1.5f }/*4*/, new[] { 1.5f, 1.5f }/*5*/, new[] { 1f, 1.5f }/*6*/, new[] { 1.5f }/*7*/, new[] { 1.5f, 1.5f, 1f }/*8*/, new[] { 1f }/*9*/, new[] { 1.5f, 1.25f, 1.5f }/*10*/};
+        public override void EditTower(Tower tower)
+        {
+            var wpn = Game.instance.model.GetTowerFromId("SpikeFactory").GetAttackModel().Duplicate();
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            wpn.name = WeaponName;
+            towerModel.AddBehavior(wpn);
+            tower.UpdateRootModel(towerModel);
+        }
+    }
+    public class Arrow : WeaponTemplate
+    {
+        public override int MaxLevel => 10;
+        public override string WeaponIcon => VanillaSprites.RapidShotAA;
+        public override string WeaponName => "Arrow";
+        public override int BaseProjectileCount => 1;
+        public override float BaseProjectileDegree => 45;
+        public override AttackModel BaseAttackModel => Game.instance.model.GetTower(TowerType.Quincy).GetAttackModel().Duplicate();
+        public override VampireMonkey.UpgradeType[][] Upgrades => new VampireMonkey.UpgradeType[][] { new[] { VampireMonkey.UpgradeType.Projectiles }/*1*/, new[] { VampireMonkey.UpgradeType.Projectiles, VampireMonkey.UpgradeType.Damage }/*2*/, new[] { VampireMonkey.UpgradeType.AttackSpeed, VampireMonkey.UpgradeType.Range }/*3*/, new[] { VampireMonkey.UpgradeType.Projectiles, VampireMonkey.UpgradeType.MIB }/*4*/, new[] { VampireMonkey.UpgradeType.ProjectileSize, VampireMonkey.UpgradeType.Pierce }/*5*/, new[] { VampireMonkey.UpgradeType.Projectiles, VampireMonkey.UpgradeType.Damage }/*6*/, new[] { VampireMonkey.UpgradeType.Range }/*7*/, new[] { VampireMonkey.UpgradeType.ProjectileSize, VampireMonkey.UpgradeType.Pierce, VampireMonkey.UpgradeType.Projectiles }/*8*/, new[] { VampireMonkey.UpgradeType.Projectiles }/*9*/, new[] { VampireMonkey.UpgradeType.Damage, VampireMonkey.UpgradeType.AttackSpeed, VampireMonkey.UpgradeType.Pierce }/*10*/};
+        public override float[][] Increase => new float[][] { new[] { 1f }/*1*/, new[] { 1f, 1.5f }/*2*/, new[] { 1.25f, 1.5f }/*3*/, new[] { 1f, 1.5f }/*4*/, new[] { 1.5f, 1.5f }/*5*/, new[] { 1f, 1.5f }/*6*/, new[] { 1.5f }/*7*/, new[] { 1.5f, 1.5f, 1f }/*8*/, new[] { 1f }/*9*/, new[] { 1.5f, 1.25f, 1.5f }/*10*/};
+        public override void EditTower(Tower tower)
+        {
+            var wpn = Game.instance.model.GetTower(TowerType.Quincy).GetAttackModel().Duplicate();
+            var towerModel = tower.rootModel.Duplicate().Cast<TowerModel>();
+            wpn.name = WeaponName;
+            towerModel.AddBehavior(wpn);
+            tower.UpdateRootModel(towerModel);
         }
     }
 }
